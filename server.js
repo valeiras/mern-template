@@ -8,9 +8,16 @@ import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 
 // routers
+import authRouter from './routes/authRouter.js';
+import userRouter from './routes/userRouter.js';
+import adminRouter from './routes/adminRouter.js';
 
 // middleware
 import errorHandlerMiddleware from './middleware/errorHandlerMiddleware.js';
+import {
+  authenticateUser,
+  authorizePermissions,
+} from './middleware/authMiddleware.js';
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -22,6 +29,18 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('Hello world');
 });
+
+app.get('/api/v1/test', (req, res) => {
+  res.json({ msg: 'test route' });
+});
+
+app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/users', authenticateUser, userRouter);
+app.use(
+  '/api/v1/admin',
+  [authenticateUser, authorizePermissions('admin')],
+  adminRouter
+);
 
 app.use('*', (req, res) => {
   res.status(404).json({ msg: 'Not found' });
